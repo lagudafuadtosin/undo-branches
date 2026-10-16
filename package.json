@@ -2,7 +2,7 @@
   "name": "undo-branches",
   "displayName": "Undo Branches",
   "description": "An undo tree for VS Code. Undo, type something new, and the old version is still there: every state of the file is kept as a branch you can click back to or compare.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "lagudafuadtosin",
   "author": "Fuad Laguda",
   "license": "MIT",

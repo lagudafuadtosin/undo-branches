@@ -4,6 +4,8 @@ An undo tree for VS Code.
 
 In plain VS Code, if you undo a few steps and then type something, the steps you undid are gone. Redo cannot bring them back. Undo Branches keeps them. Every version of the file stays in a tree, and you can click any of them to go back, or compare it with what you have now.
 
+![Undo, type something else, and the old version is still in the tree](images/demo.gif)
+
 This is the feature asked for in [microsoft/vscode#20889](https://github.com/microsoft/vscode/issues/20889) "Undo branches", open since 2017. It works the way the undo tree works in Vim and Emacs.
 
 ## How to use it

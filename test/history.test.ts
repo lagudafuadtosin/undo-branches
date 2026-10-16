@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { History, apply, fromChanges, invert, type Change } from "../src/history";
+import { History, apply, fromChanges, invert, snippet, type Change } from "../src/history";
 
 const hash = (t: string) => createHash("sha1").update(t).digest("base64");
 
@@ -228,4 +228,14 @@ test("pruning the last saved state clears the mark", () => {
   t = edit(h, t, [ins(2, "c")]);
   h.commit(t);
   assert.equal(h.lastSave, -1);
+});
+
+test("the preview shows the whole run typed, not the last key", () => {
+  let t = "";
+  const h = new History(t, hash);
+  for (const ch of "hello there") t = edit(h, t, [ins(t.length, ch)]);
+  const s = h.commit(t)!;
+  assert.equal(snippet(s), "hello there");
+  for (let i = 0; i < 5; i++) t = edit(h, t, [del(t.length - 1, 1)]);
+  assert.equal(snippet(h.commit(t)!), "removed: there");
 });

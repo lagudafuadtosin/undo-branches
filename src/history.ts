@@ -60,6 +60,21 @@ export function fromChanges(before: string, changes: readonly Change[]): Op[] {
     .map((c) => ({ at: c.rangeOffset, del: before.substr(c.rangeOffset, c.rangeLength), ins: c.text }));
 }
 
+// What the state typed, or else what it removed. Typing arrives one key at a
+// time, so the pieces are joined in the order they happened.
+export function snippet(s: Pick<State, "ops">): string {
+  const typed = s.ops.map((o) => o.ins).join("").replace(/\s+/g, " ").trim();
+  const removed = s.ops
+    .map((o) => o.del)
+    .reverse()
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  const text = typed || removed;
+  if (!text) return "";
+  return (typed ? "" : "removed: ") + (text.length > 40 ? text.slice(0, 40) + "…" : text);
+}
+
 export class History {
   readonly states = new Map<number, State>();
   root = 0;

@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { History, fromChanges, type Kind, type Saved, type State } from "./history";
+import { History, fromChanges, snippet, type Kind, type Saved, type State } from "./history";
 
 const SCHEME = "undo-branches";
 const hash = (t: string) => createHash("sha1").update(t).digest("base64");
@@ -189,13 +189,6 @@ function ago(ms: number): string {
   return `${Math.round(s / 86400)} d ago`;
 }
 
-function snippet(s: State): string {
-  const o = s.ops.find((x) => x.ins.trim()) ?? s.ops.find((x) => x.del.trim());
-  if (!o) return "";
-  const added = o.ins.trim() !== "";
-  const text = (added ? o.ins : o.del).replace(/\s+/g, " ").trim();
-  return (added ? "" : "removed: ") + (text.length > 40 ? text.slice(0, 40) + "…" : text);
-}
 
 class View implements vscode.TreeDataProvider<Item> {
   private emitter = new vscode.EventEmitter<Item | undefined>();
@@ -234,22 +227,23 @@ class View implements vscode.TreeDataProvider<Item> {
 
     if (el.type === "branch") {
       const line = h.line(el.id);
-      const item = new vscode.TreeItem(`Branch, ${line.length} ${line.length === 1 ? "state" : "states"}`, onPath.has(el.id) ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed);
+      const item = new vscode.TreeItem(`Branch, ${line.length} ${line.length === 1 ? "state" : "states"}`, vscode.TreeItemCollapsibleState.Expanded);
       item.id = `b:${el.key}:${el.id}`;
       item.iconPath = new vscode.ThemeIcon("git-branch");
       item.description = ago(h.get(line[line.length - 1]).time);
       return item;
     }
 
+    // Forks start open, so the versions plain undo would have lost are in view.
     const forks = s.children.length - 1;
-    const main = h.line(el.id)[1];
-    const forkHasCurrent = s.children.some((c) => c !== main && onPath.has(c));
     const item = new vscode.TreeItem(
       s.kind === "start" ? "Start" : `#${s.seq}  +${s.added} −${s.removed}`,
-      forks > 0 ? (forkHasCurrent ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed) : vscode.TreeItemCollapsibleState.None,
+      forks > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
     );
     const current = s.id === h.current;
-    item.id = `s:${el.key}:${el.id}`;
+    // The id changes when a fork appears, so VS Code opens it instead of
+    // keeping the closed state it had as a plain row.
+    item.id = `s:${el.key}:${el.id}:${s.children.length}`;
     item.description = [
       current ? "current" : ago(s.time),
       s.id === h.lastSave ? "last save" : s.saved ? "saved" : "",
