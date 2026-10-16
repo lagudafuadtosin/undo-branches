@@ -1,0 +1,195 @@
+{
+  "name": "undo-branches",
+  "displayName": "Undo Branches",
+  "description": "An undo tree for VS Code. Undo, type something new, and the old version is still there: every state of the file is kept as a branch you can click back to or compare.",
+  "version": "0.1.0",
+  "publisher": "lagudafuadtosin",
+  "author": "Fuad Laguda",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "pricing": "Free",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lagudafuadtosin/undo-branches"
+  },
+  "bugs": {
+    "url": "https://github.com/lagudafuadtosin/undo-branches/issues"
+  },
+  "homepage": "https://github.com/lagudafuadtosin/undo-branches#readme",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "undo",
+    "undo tree",
+    "undotree",
+    "redo",
+    "history",
+    "branches",
+    "vim",
+    "emacs",
+    "local history"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "undoBranches.tree",
+          "name": "Undo Branches"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "undoBranches.tree",
+        "contents": "Open a file and edit it. Every version is kept here, including the ones a normal undo would lose."
+      }
+    ],
+    "commands": [
+      {
+        "command": "undoBranches.goTo",
+        "title": "Go to This State",
+        "category": "Undo Branches"
+      },
+      {
+        "command": "undoBranches.compare",
+        "title": "Compare with Now",
+        "category": "Undo Branches",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "undoBranches.undo",
+        "title": "Back to the Parent State",
+        "category": "Undo Branches",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "undoBranches.redo",
+        "title": "Forward to the Child State",
+        "category": "Undo Branches",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "undoBranches.earlier",
+        "title": "Earlier in Time (any branch)",
+        "category": "Undo Branches",
+        "icon": "$(history)"
+      },
+      {
+        "command": "undoBranches.later",
+        "title": "Later in Time (any branch)",
+        "category": "Undo Branches",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "undoBranches.forget",
+        "title": "Forget This File's History",
+        "category": "Undo Branches",
+        "icon": "$(clear-all)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "undoBranches.earlier",
+          "when": "view == undoBranches.tree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "undoBranches.later",
+          "when": "view == undoBranches.tree",
+          "group": "navigation@2"
+        },
+        {
+          "command": "undoBranches.forget",
+          "when": "view == undoBranches.tree",
+          "group": "more"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "undoBranches.compare",
+          "when": "view == undoBranches.tree && viewItem == state",
+          "group": "inline"
+        },
+        {
+          "command": "undoBranches.compare",
+          "when": "view == undoBranches.tree && viewItem == state",
+          "group": "1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "undoBranches.goTo",
+          "when": "false"
+        },
+        {
+          "command": "undoBranches.compare",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Undo Branches",
+      "properties": {
+        "undoBranches.groupDelay": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 100,
+          "description": "Typing is kept as one state until you pause for this many milliseconds. Saving, undo, redo and switching files also close a state."
+        },
+        "undoBranches.maxStates": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 10,
+          "description": "The most states kept per file. Past this, the oldest are dropped first, never the one you are on."
+        },
+        "undoBranches.maxFileSize": {
+          "type": "number",
+          "default": 5000000,
+          "description": "Files longer than this many characters are not tracked."
+        },
+        "undoBranches.persist": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Keep each file's history after VS Code closes, like Vim's `undofile`. The history is stored in VS Code's own storage for this extension and only reloads when the file is unchanged since. Off by default, because the stored history holds earlier versions of your files."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p . && node esbuild.mjs",
+    "test": "esbuild test/history.test.ts --bundle --platform=node --format=esm --outdir=.test-build --out-extension:.js=.mjs --log-level=warning && node --test .test-build/history.test.mjs",
+    "package": "npm run build && vsce package --no-dependencies",
+    "check:host": "npm run build && esbuild test/host/suite.ts --bundle --platform=node --format=cjs --external:vscode --outfile=.test-build/host-suite.cjs --log-level=warning && esbuild test/host/run.ts --bundle --platform=node --format=cjs --outfile=.test-build/host-run.cjs --log-level=warning && node .test-build/host-run.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "~1.75.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  },
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ]
+}
